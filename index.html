@@ -130,4 +130,7 @@ async function loadStock(staff,branches,feedback=''){
  }catch(e){msgEl.className='error';msgEl.textContent='Stock unavailable: '+e.message}
 }
 try{const saved=JSON.parse(sessionStorage.getItem('cb_config'));if(saved&&saved.url&&saved.key){$('url').value=saved.url;$('key').value=saved.key;connect()}}catch{}
-</script></body></html>
+</script>
+<script src="camera-bay-v9.js"></script>
+</body>
+</html>
