@@ -1,44 +1,47 @@
-// CAMERA BAY V9.js — STOCK IN
-// Admin 1 & Admin 2 only
-
+/* CAMERA BAY V9 — STOCK IN */
 (function () {
-  const originalLoadStock = window.loadStock;
+  'use strict';
 
-  if (typeof originalLoadStock !== "function") {
-    console.error("V9: V8 loadStock function not found.");
+  const oldLoadStock = window.loadStock;
+
+  if (typeof oldLoadStock !== 'function') {
+    console.error('V8 loadStock not found');
     return;
   }
 
-  window.loadStock = async function (staff, branches, feedback = "") {
-    await originalLoadStock(staff, branches, feedback);
+  window.loadStock = async function (
+    staff, branches, feedback = ''
+  ) {
+    await oldLoadStock(staff, branches, feedback);
 
     if (
-      staff.role !== "super_admin" ||
-      !["admin", "admin2"].includes(staff.username)
+      staff.role !== 'super_admin' ||
+      !['admin', 'admin2'].includes(staff.username)
     ) return;
 
-    const container = document.getElementById("stocktable");
-    if (!container) return;
+    const root = document.getElementById('stocktable');
+    if (!root) return;
 
-    const oldBox = document.getElementById("v9-stock-in");
-    if (oldBox) oldBox.remove();
+    document.getElementById('v9-stock-in')?.remove();
 
-    const box = document.createElement("div");
-    box.id = "v9-stock-in";
-    box.className = "card";
+    const box = document.createElement('section');
+    box.id = 'v9-stock-in';
+    box.className = 'card';
 
     box.innerHTML = `
       <h3>+ Stock In / Ongeza Mzigo</h3>
-      <p>Ongeza bidhaa kwenye stock iliyopo.</p>
 
-      <label>Product</label>
+      <label>Product / Bidhaa</label>
       <select id="v9-product"></select>
 
       <label>Branch / Store</label>
       <select id="v9-branch"></select>
 
-      <label>Quantity</label>
-      <input id="v9-quantity" type="number" min="1" step="1">
+      <label>Quantity / Idadi</label>
+      <input id="v9-qty"
+             type="number"
+             min="1"
+             step="1">
 
       <label>Notes / Invoice Number</label>
       <input id="v9-notes" type="text">
@@ -47,74 +50,89 @@
       <p id="v9-status"></p>
     `;
 
-    container.appendChild(box);
+    root.appendChild(box);
 
-    const productsResult = await client
-      .from("sales_product_catalog")
-      .select("id,name")
-      .order("name");
+    const $ = id => document.getElementById(id);
+    const save = $('v9-save');
+    const status = $('v9-status');
 
-    if (productsResult.error) {
-      document.getElementById("v9-status").textContent =
-        productsResult.error.message;
+    save.disabled = true;
+    status.textContent = 'Loading products...';
+
+    try {
+      const { data, error } = await client
+        .from('sales_product_catalog')
+        .select('id,name')
+        .order('name');
+
+      if (error) throw error;
+
+      for (const p of data || []) {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = p.name;
+        $('v9-product').appendChild(option);
+      }
+
+      for (const b of branches || []) {
+        const option = document.createElement('option');
+        option.value = b.id;
+        option.textContent = b.name;
+        $('v9-branch').appendChild(option);
+      }
+
+      if (!$('v9-product').value || !$('v9-branch').value) {
+        status.textContent = 'No products or branches found.';
+        return;
+      }
+
+      save.disabled = false;
+      status.textContent = 'Ready';
+
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
       return;
     }
 
-    const productSelect = document.getElementById("v9-product");
-    const branchSelect = document.getElementById("v9-branch");
+    save.onclick = async () => {
+      const qty = Number($('v9-qty').value);
 
-    for (const product of productsResult.data || []) {
-      const option = document.createElement("option");
-      option.value = product.id;
-      option.textContent = product.name;
-      productSelect.appendChild(option);
-    }
-
-    for (const branch of branches) {
-      const option = document.createElement("option");
-      option.value = branch.id;
-      option.textContent = branch.name;
-      branchSelect.appendChild(option);
-    }
-
-    document.getElementById("v9-save").onclick = async () => {
-      const quantity = Number(
-        document.getElementById("v9-quantity").value
-      );
-
-      const status = document.getElementById("v9-status");
-
-      if (!Number.isSafeInteger(quantity) || quantity <= 0) {
-        status.textContent = "Enter a valid quantity.";
+      if (!Number.isSafeInteger(qty) || qty <= 0) {
+        status.textContent = 'Enter valid quantity.';
         return;
       }
 
-      if (!confirm("Confirm Stock In: " + quantity + " units?")) {
+      if (!confirm('Confirm Stock In: ' + qty + '?')) {
         return;
       }
 
-      const button = document.getElementById("v9-save");
-      button.disabled = true;
-      status.textContent = "Saving...";
+      save.disabled = true;
+      status.textContent = 'Saving...';
 
-      const { data, error } = await client.rpc("stock_in", {
-        p_product_id: productSelect.value,
-        p_branch_id: branchSelect.value,
-        p_quantity: quantity,
-        p_notes: document.getElementById("v9-notes").value || null
-      });
+      try {
+        const { data, error } = await client.rpc(
+          'stock_in',
+          {
+            p_product_id: $('v9-product').value,
+            p_branch_id: $('v9-branch').value,
+            p_quantity: qty,
+            p_notes: $('v9-notes').value.trim() || null
+          }
+        );
 
-      if (error) {
-        status.textContent = "Error: " + error.message;
-        button.disabled = false;
-        return;
+        if (error) throw error;
+
+        await window.loadStock(
+          staff,
+          branches,
+          'Stock In saved successfully!'
+        );
+
+      } catch (err) {
+        status.textContent =
+          'Stock In not saved: ' + err.message;
+        save.disabled = false;
       }
-
-      await window.loadStock(
-        staff,
-        branches,
-        "Stock In saved successfully! New stock: " + data
-      );
     };
   };
 })();
