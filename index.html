@@ -55,7 +55,8 @@ $('signin').onclick=async()=>{
   else if(!s.data.length){const p=document.createElement('p');p.textContent='No sales records yet.';recent.appendChild(p)}
   else{const table=document.createElement('table');const head=document.createElement('tr');for(const h of ['Date','Amount (TZS)']){const th=document.createElement('th');th.textContent=h;head.appendChild(th)}table.appendChild(head);for(const item of s.data){const tr=document.createElement('tr');for(const v of [new Date(item.created_at).toLocaleString(),Number(item.total_amount||0).toLocaleString()]){const td=document.createElement('td');td.textContent=v;tr.appendChild(td)}table.appendChild(tr)}recent.appendChild(table)}
   show('dash');$('password').value='';
- }catch(e){msg('loginmsg',e.message,true);await client.auth.signOut()}finally{btn.disabled=false}
+ }catch(e){msg('loginmsg','Login error: '+(e?.message||String(e)),true);
+console.error('Camera Bay login error:',e);await client.auth.signOut()}finally{btn.disabled=false}
 };
 $('logout').onclick=async()=>{await client.auth.signOut();show('login')};
 async function loadStock(staff,branches,feedback=''){
