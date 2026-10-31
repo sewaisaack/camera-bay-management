@@ -13,7 +13,53 @@ const $=id=>document.getElementById(id);let client=null;const emails={admin:'sew
    const categoryFilter=document.createElement('select');const all=document.createElement('option');all.value='';all.textContent='All categories';categoryFilter.appendChild(all);
    for(const c of categories){const o=document.createElement('option');o.value=c;o.textContent=c;categoryFilter.appendChild(o)}
    const search=document.createElement('input');search.type='search';search.placeholder='Search product / Tafuta bidhaa';search.setAttribute('aria-label','Search products');
-   controls.append(categoryFilter,search);tableEl.appendChild(controls);
+  controls.append(categoryFilter,search);tableEl.appendChild(controls);
+
+const addBox=document.createElement('div');
+addBox.innerHTML=`
+  <h3>+ Add Product / Ongeza Bidhaa</h3>
+  <form id="addProductForm">
+    <input id="newProductName" placeholder="Product Name" required>
+    <input id="newProductCategory" placeholder="Category (Camera, Lens, Accessories)" required>
+    <input id="newProductPrice" type="number" min="0" placeholder="Selling Price (TZS)">
+    <button type="submit">Save Product</button>
+    <p id="addProductStatus"></p>
+  </form>
+`;
+tableEl.appendChild(addBox);
+
+addBox.querySelector('#addProductForm').onsubmit=async(e)=>{
+  e.preventDefault();
+  const name=addBox.querySelector('#newProductName').value.trim();
+  const category=addBox.querySelector('#newProductCategory').value.trim();
+  const rawPrice=addBox.querySelector('#newProductPrice').value;
+  const price=rawPrice===''?null:Number(rawPrice);
+  const status=addBox.querySelector('#addProductStatus');
+  const button=e.target.querySelector('button');
+
+  if(!name||!category||price!==null&&(!Number.isFinite(price)||price<0)){
+    status.textContent='Please check product details.';
+    return;
+  }
+
+  button.disabled=true;
+  status.textContent='Saving...';
+
+  try{
+    const {error}=await client.rpc('add_store_product',{
+      p_name:name,
+      p_category:category,
+      p_reference_price:price
+    });
+    if(error)throw error;
+    status.textContent='Product saved successfully!';
+    await loadStock(staff,branches);
+  }catch(err){
+    status.textContent='Error: '+err.message;
+  }finally{
+    button.disabled=false;
+  }
+};
    const count=document.createElement('p');tableEl.appendChild(count);
    const tableWrap=document.createElement('div');tableWrap.style.overflowX='auto';tableEl.appendChild(tableWrap);
    const thead=['Product','Category','Reference price (TZS)',...visible.map(b=>b.name),'Total'];
