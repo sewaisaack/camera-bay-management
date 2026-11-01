@@ -8,7 +8,24 @@
   if (!dash || document.getElementById("cb-v20-menu")) return;
 
   const css = document.createElement("style");
+
   css.textContent = `
+ /* Hide old notice after login */
+body:has(#dash:not(.hidden)) > main > .notice {
+  display: none !important;
+}
+
+/* Keep Dashboard sales summary only */
+#dash.cb-v20-active[data-cb-v20-view="home"]
+#cb-v17-sales > div:not(:first-of-type) {
+  display: none !important;
+}
+
+/* Hide refresh button on Dashboard */
+#dash.cb-v20-active[data-cb-v20-view="home"]
+#cb-v17-sales > button {
+  display: none !important;
+} 
     #cb-v20-menu {
       display:grid;
       grid-template-columns:repeat(2,minmax(0,1fr));
