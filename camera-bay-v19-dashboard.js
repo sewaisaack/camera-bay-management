@@ -44,9 +44,36 @@
     }
   }
 
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',init,{once:true});
-  }else{
+    function applyLayout(){
     init();
+
+    const inventory=document.getElementById('inventory');
+    if(inventory){
+      const card=inventory.closest('.metric');
+      if(card)card.style.display='none';
+    }
+
+    const details=document.getElementById('cb-v19-stock-details');
+    if(details){
+      const stock=document.getElementById('stocktable');
+      const stockMsg=document.getElementById('stockmsg');
+
+      if(stock && !details.contains(stock)){
+        details.querySelector('div')?.appendChild(stock);
+      }
+
+      if(stockMsg && !details.contains(stockMsg)){
+        details.querySelector('div')?.prepend(stockMsg);
+      }
+    }
   }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',applyLayout,{once:true});
+  }else{
+    applyLayout();
+  }
+
+  setTimeout(applyLayout,1000);
+  setTimeout(applyLayout,3000);
 })();
