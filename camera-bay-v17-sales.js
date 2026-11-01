@@ -40,4 +40,5 @@ mount();
 const observer=new MutationObserver(()=>{const dash=document.getElementById('dash');if(dash&&!dash.classList.contains('hidden')){mount();update();}});
 const dash=document.getElementById('dash');if(dash)observer.observe(dash,{attributes:true,attributeFilter:['class']});
 window.cameraBayRefreshSales=update;
+let wasVisible=false;setInterval(()=>{const d=document.getElementById('dash');const visible=!!d&&!d.classList.contains('hidden');if(visible){mount();if(!wasVisible)update();}wasVisible=visible;},1200);
 })();
