@@ -136,7 +136,7 @@ async function loadStock(staff,branches,feedback=''){
   status.textContent='Not saved: '+e.message;
   save.disabled=false;
 }
-   
+   };
    tableEl.appendChild(box);
   }
  }catch(e){msgEl.className='error';msgEl.textContent='Stock unavailable: '+e.message}
