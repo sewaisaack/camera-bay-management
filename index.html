@@ -123,7 +123,7 @@ async function loadStock(staff,branches,feedback=''){
     if(!Number.isSafeInteger(n)||n<=0){status.textContent='Weka idadi kamili zaidi ya 0';return}
     if(!confirm('Confirm stock '+n+' for this product/location?'))return;
     save.disabled=true;status.textContent='Saving...';
-    try{const {data,error}=await client.rpc('set_initial_stock
+    client.rpc('set_initial_stock',{
                                             ',{p_product_id:pSel.value,p_branch_id:bSel.value,p_quantity:n});if(error)throw error;await loadStock(staff,branches,'Initial stock saved successfully! Stock: '+data)}catch(e){status.className='error';status.textContent='Not saved: '+e.message;save.disabled=false}
    };
    tableEl.appendChild(box);
